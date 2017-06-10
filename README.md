@@ -1,6 +1,6 @@
 | Data | Autor | Comentários | Versão |
 | --- | --- | --- | --- |
-| 09/03/2017 | Guilherme Fernandes | Versão inicial | 1.0 |  
+| 09/03/2017 | Danilo Rubervany Dias | Versão inicial | 1.0 |  
 
 # Sobre esta aplicação
 
