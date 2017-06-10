@@ -4,7 +4,7 @@
 
 # Sobre esta aplicação
 
-Este projeto é responsável por consultar, ativar e desativar Identificadores (TAG).
+Este projeto é responsável por ler os arquivos de cadastro, fatura e sinistro da Bradesco.
 
 #Sobre a arquitetura 
 Este projeto está modelado com base na arquitetura hexagonal com spring boot.
