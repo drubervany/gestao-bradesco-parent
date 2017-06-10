@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<artifactId>bradesco-build</artifactId>
+	<name>Projeto de Build</name>
+	<description>Projeto de Build com todas as dependências para subir no docker</description>
+
+	<parent>
+		<groupId>br.com.syshealth.gestao.bradesco</groupId>
+		<artifactId>gestao-bradesco-parent</artifactId>
+		<version>1.0.0.RELEASE</version>
+		<relativePath>../pom.xml</relativePath>
+	</parent>
+
+	<properties>
+		<start-class>br.com.syshealth.gestao.bradesco.adapter.inbound.application.GestaoIdentificadorApplication</start-class>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<java.version>1.8</java.version>
+	</properties>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>copy-dependencies</id>
+						<phase>prepare-package</phase>
+						<goals>
+							<goal>copy-dependencies</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${project.build.directory}/lib</outputDirectory>
+							<overWriteReleases>false</overWriteReleases>
+							<overWriteSnapshots>false</overWriteSnapshots>
+							<overWriteIfNewer>true</overWriteIfNewer>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<configuration>
+					<archive>
+						<manifest>
+							<addClasspath>true</addClasspath>
+							<classpathPrefix>lib/</classpathPrefix>
+						</manifest>
+					</archive>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<jvmArguments>-Xdebug
+						-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005</jvmArguments>
+				</configuration>
+			</plugin>
+
+		</plugins>
+	</build>
+	<dependencies>
+		<dependency>
+			<groupId>br.com.syshealth.gestao.bradesco</groupId>
+			<artifactId>bradesco-core-application</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>br.com.syshealth.gestao.bradesco</groupId>
+			<artifactId>bradesco-activemq-adapter-inbound</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>br.com.syshealth.gestao.bradesco</groupId>
+			<artifactId>bradesco-mongodb-adapter-outbound</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>br.com.syshealth.gestao.bradesco</groupId>
+			<artifactId>bradesco-activemq-adapter-outbound</artifactId>
+		</dependency>
+	</dependencies>
+</project>

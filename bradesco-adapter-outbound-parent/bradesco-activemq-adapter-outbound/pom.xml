@@ -1,0 +1,48 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>br.com.syshealth.gestao.bradesco</groupId>
+		<artifactId>bradesco-adapter-outbound-parent</artifactId>
+		<version>1.0.0.RELEASE</version>
+	</parent>
+	<artifactId>bradesco-activemq-adapter-outbound</artifactId>
+
+	<dependencies>
+		<dependency>
+			<groupId>br.com.syshealth.gestao.bradesco</groupId>
+			<artifactId>bradesco-core-application</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>br.com.syshealth.gestao.bradesco</groupId>
+			<artifactId>bradesco-core-port-outbound</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>br.com.syshealth.gestao.bradesco</groupId>
+			<artifactId>bradesco-core-port-commons</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>br.com.syshealth.gestao.bradesco</groupId>
+			<artifactId>bradesco-core-application</artifactId>
+		</dependency>
+		<!-- Spring Boot -->
+		<!-- Test -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- Compile -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-activemq</artifactId>
+		</dependency>
+	</dependencies>
+</project>
