@@ -37,7 +37,7 @@ A arquitetura hexagonal está modelada da seguinte forma:
 
 	* gestao-bradesco-parent
    
-   Projeto centralizador do microserviço consultar, ativar e desativar Identificadores (TAG).
+   Projeto centralizador do microserviço consultar, ativar e desativar .
 
 	* bradesco-adapter-inbound-parent
 
