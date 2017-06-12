@@ -87,4 +87,9 @@ public interface GestaoBradescoDePara {
         return SimNaoEnum.NAO;
     }
 
+    public static Long retornaCodigoSegurado(Long numeroDoCertificado, Integer complementoDoCertificado) {
+        return new Long(numeroDoCertificado.toString()
+                + StringUtils.lpad(complementoDoCertificado.toString(), "0", 2));
+    }
+
 }
