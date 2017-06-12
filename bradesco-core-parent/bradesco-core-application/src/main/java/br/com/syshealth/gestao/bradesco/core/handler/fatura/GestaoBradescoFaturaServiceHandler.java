@@ -1,8 +1,6 @@
 package br.com.syshealth.gestao.bradesco.core.handler.fatura;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Scanner;
 
 import org.slf4j.Logger;
@@ -10,11 +8,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import br.com.syshealth.commons.dto.EmpresaPremio;
+import br.com.syshealth.commons.dto.Empresa;
 import br.com.syshealth.commons.dto.Plano;
 import br.com.syshealth.commons.dto.Premio;
-import br.com.syshealth.commons.dto.SeguradoPremio;
-import br.com.syshealth.commons.dto.SubEmpresaPremio;
+import br.com.syshealth.commons.dto.Segurado;
+import br.com.syshealth.commons.dto.SubEmpresa;
 import br.com.syshealth.commons.enums.EstadoCivilEnum;
 import br.com.syshealth.commons.enums.GrauParentescoEnum;
 import br.com.syshealth.commons.enums.OperadoraEnum;
@@ -149,32 +147,38 @@ public class GestaoBradescoFaturaServiceHandler implements GestaoBradescoListene
     private void enviarSysHealth(PremioDto premio) {
         log.info("enviarSysHealth: {}", premio);
         try {
-            syshealth.sendPremio(montarSysHealth(premio));
+            montarSysHealth(premio);
         } catch (CoreValidationException e) {
             log.error("montarSysHealth {}", e);
         }
         log.info("montarSysHealth finalizado!");
     }
 
-    private Premio montarSysHealth(PremioDto fatura) {
+    private void montarSysHealth(PremioDto fatura) throws CoreValidationException {
         log.info("montarSysHealth: {}", fatura);
 
-        List<SubEmpresaPremio> subEmpresas = new ArrayList<>();
+        Empresa empresa = new Empresa(fatura.getCodigoDaCompanhia(),
+                fatura.getNomeDoEstipulante(),
+                fatura.getCodigoDoContrato(),
+                OperadoraEnum.BRADESCO);
+
         for (HeaderSubFaturaDto headerSubFaturaDto : fatura.getHeaderSubFatura()) {
 
-            List<SeguradoPremio> segurados = new ArrayList<>();
+            SubEmpresa subEmpresa = new SubEmpresa(headerSubFaturaDto.getNumeroDaSubfatura(),
+                    headerSubFaturaDto.getNomeDaSubfatura(), null, null);
+
             for (TitularDependenteDto titularDependenteDto : headerSubFaturaDto.getTitularDependente()) {
 
                 TipoBeneficiarioEnum tipoBeneficiario = null;
                 SexoEnum sexo = null;
                 GrauParentescoEnum parentesco = null;
                 EstadoCivilEnum estadoCivil = null;
-                SeguradoPremio segurado = null;
+                Segurado segurado = null;
                 Integer idade = null;
                 Plano plano = null;
 
-                Long codigoSegurado = new Long(titularDependenteDto.getNumeroDoCertificado().toString()
-                        + StringUtils.lpad(titularDependenteDto.getComplementoDoCertificado().toString(), "0", 2));
+                Long codigoSegurado = GestaoBradescoDePara.retornaCodigoSegurado(titularDependenteDto.getNumeroDoCertificado(),
+                        titularDependenteDto.getComplementoDoCertificado());
 
                 /** Igual a Segurado **/
                 if (codigoSegurado != 0) {
@@ -215,30 +219,18 @@ public class GestaoBradescoFaturaServiceHandler implements GestaoBradescoListene
                             plano,
                             codigoSegurado);
 
-                segurados.add(segurado);
-
+                syshealth.sendPremio(
+                        new Premio(fatura.getCompetenciaDaFatura(), empresa, subEmpresa, segurado,
+                                BigDecimal.valueOf(titularDependenteDto.getValorDoLancamento()),
+                                BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.valueOf(titularDependenteDto.getParteDoSegurado())));
             }
-
-            SubEmpresaPremio subEmpresa = new SubEmpresaPremio(headerSubFaturaDto.getNumeroDaSubfatura(),
-                    headerSubFaturaDto.getNomeDaSubfatura(),
-                    segurados, null, null);
-
-            subEmpresas.add(subEmpresa);
         }
-
-        EmpresaPremio empresa = new EmpresaPremio(fatura.getCodigoDaCompanhia(),
-                fatura.getNomeDoEstipulante(),
-                fatura.getCodigoDoContrato(),
-                OperadoraEnum.BRADESCO,
-                subEmpresas);
-
-        return new Premio(fatura.getCompetenciaDaFatura(), empresa);
     }
 
-    private SeguradoPremio criaSegurado(TitularDependenteDto titularDependenteDto, TipoBeneficiarioEnum tipoBeneficiario, SexoEnum sexo,
+    private Segurado criaSegurado(TitularDependenteDto titularDependenteDto, TipoBeneficiarioEnum tipoBeneficiario, SexoEnum sexo,
             GrauParentescoEnum parentesco, EstadoCivilEnum estadoCivil, Integer idade, Plano plano, Long codigoSegurado) {
 
-        return new SeguradoPremio(codigoSegurado, null,
+        return new Segurado(codigoSegurado, null,
                 titularDependenteDto.getNomeDoSeguradoDependente(),
                 null,
                 titularDependenteDto.getDataDeNascimento(),
@@ -249,10 +241,6 @@ public class GestaoBradescoFaturaServiceHandler implements GestaoBradescoListene
                 parentesco,
                 estadoCivil,
                 idade,
-                plano,
-                BigDecimal.valueOf(titularDependenteDto.getValorDoLancamento()),
-                BigDecimal.ZERO,
-                BigDecimal.ZERO,
-                BigDecimal.valueOf(titularDependenteDto.getParteDoSegurado()));
+                plano);
     }
 }

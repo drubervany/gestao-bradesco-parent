@@ -1,8 +1,6 @@
 package br.com.syshealth.gestao.bradesco.core.handler.cadastro;
 
-import java.util.HashSet;
 import java.util.Scanner;
-import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,10 +8,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import br.com.syshealth.commons.dto.Cadastro;
-import br.com.syshealth.commons.dto.EmpresaCadastro;
+import br.com.syshealth.commons.dto.Empresa;
 import br.com.syshealth.commons.dto.Plano;
 import br.com.syshealth.commons.dto.Segurado;
-import br.com.syshealth.commons.dto.SubEmpresaCadastro;
+import br.com.syshealth.commons.dto.SubEmpresa;
 import br.com.syshealth.commons.enums.OperadoraEnum;
 import br.com.syshealth.commons.utils.StringUtils;
 import br.com.syshealth.gestao.bradesco.commons.file.fixed.cadastro.FixedFormat;
@@ -137,19 +135,22 @@ public class GestaoBradescoCadastroServiceHandler implements GestaoBradescoListe
     private void enviarSysHealth(CadastroDto cadastro) {
         log.info("enviarSysHealth: {}", cadastro);
         try {
-            syshealth.sendCadastro(montarSysHealth(cadastro));
+            montarSysHealth(cadastro);
         } catch (CoreValidationException e) {
             log.error("montarSysHealth {}", e);
         }
         log.info("montarSysHealth finalizado!");
     }
 
-    private Cadastro montarSysHealth(CadastroDto cadastro) {
+    private void montarSysHealth(CadastroDto cadastro) throws CoreValidationException {
         log.info("montarSysHealth: {}", cadastro);
 
-        Set<Segurado> segurados = new HashSet<>();
-        Set<SubEmpresaCadastro> subEmpresas = new HashSet<>();
         for (TitularDto titular : cadastro.getTitular()) {
+
+            Empresa empresa = new Empresa(null, null, cadastro.getNumeroDoContrato(),
+                    OperadoraEnum.BRADESCO);
+
+            SubEmpresa subEmpresa = new SubEmpresa(titular.getNumeroDaSubfatura(), null, null, null);
 
             Segurado seguradoTitular = new Segurado(new Long(titular.getNumeroDoCertificado().toString() + "00"),
                     titular.getTitularComplemento().getNumeroCartao(),
@@ -167,7 +168,7 @@ public class GestaoBradescoCadastroServiceHandler implements GestaoBradescoListe
                     new Plano(titular.getPlano(),
                             titular.getPlano()));
 
-            segurados.add(seguradoTitular);
+            syshealth.sendCadastro(new Cadastro(cadastro.getDataDeCompetencia(), empresa, subEmpresa, seguradoTitular));
 
             for (DependenteDto dependente : titular.getDependente()) {
 
@@ -186,15 +187,9 @@ public class GestaoBradescoCadastroServiceHandler implements GestaoBradescoListe
                         StringUtils.calculaIdade(dependente.getDataDeNascimento()),
                         seguradoTitular.getPlano());
 
-                segurados.add(seguradoDependente);
+                syshealth.sendCadastro(new Cadastro(cadastro.getDataDeCompetencia(), empresa, subEmpresa, seguradoDependente));
             }
-
-            subEmpresas.add(new SubEmpresaCadastro(titular.getNumeroDaSubfatura(), segurados));
         }
-
-        EmpresaCadastro empresa = new EmpresaCadastro(cadastro.getNumeroDoContrato(), OperadoraEnum.BRADESCO, subEmpresas);
-
-        return new Cadastro(cadastro.getDataDeCompetencia(), empresa);
     }
 
 }
