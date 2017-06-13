@@ -200,24 +200,32 @@ public class GestaoBradescoFaturaServiceHandler implements GestaoBradescoListene
 
                     idade = StringUtils.calculaIdade(titularDependenteDto.getDataDeNascimento());
 
-                    segurado = criaSegurado(titularDependenteDto,
+                    segurado = new Segurado(codigoSegurado, null,
+                            titularDependenteDto.getNomeDoSeguradoDependente(),
+                            null,
+                            titularDependenteDto.getDataDeNascimento(),
+                            titularDependenteDto.getDataInicioVigencia(),
+                            null,
                             tipoBeneficiario,
                             sexo,
                             parentesco,
                             estadoCivil,
                             idade,
-                            plano,
-                            codigoSegurado);
+                            plano);
 
                 } else // Cobrança Diferenciada
-                    segurado = criaSegurado(titularDependenteDto,
+                    segurado = new Segurado(codigoSegurado, null,
+                            titularDependenteDto.getNomeDoSeguradoDependente(),
+                            null,
+                            titularDependenteDto.getDataDeNascimento(),
+                            titularDependenteDto.getDataInicioVigencia(),
+                            null,
                             tipoBeneficiario,
                             sexo,
                             parentesco,
                             estadoCivil,
                             idade,
-                            plano,
-                            codigoSegurado);
+                            plano);
 
                 syshealth.sendPremio(
                         new Premio(fatura.getCompetenciaDaFatura(), empresa, subEmpresa, segurado,
@@ -225,22 +233,5 @@ public class GestaoBradescoFaturaServiceHandler implements GestaoBradescoListene
                                 BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.valueOf(titularDependenteDto.getParteDoSegurado())));
             }
         }
-    }
-
-    private Segurado criaSegurado(TitularDependenteDto titularDependenteDto, TipoBeneficiarioEnum tipoBeneficiario, SexoEnum sexo,
-            GrauParentescoEnum parentesco, EstadoCivilEnum estadoCivil, Integer idade, Plano plano, Long codigoSegurado) {
-
-        return new Segurado(codigoSegurado, null,
-                titularDependenteDto.getNomeDoSeguradoDependente(),
-                null,
-                titularDependenteDto.getDataDeNascimento(),
-                titularDependenteDto.getDataInicioVigencia(),
-                null,
-                tipoBeneficiario,
-                sexo,
-                parentesco,
-                estadoCivil,
-                idade,
-                plano);
     }
 }

@@ -1,25 +1,20 @@
 package br.com.syshealth.gestao.bradesco.core.handler.sinistro;
 
 import java.math.BigDecimal;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Scanner;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import br.com.syshealth.commons.dto.EmpresaSinistro;
+import br.com.syshealth.commons.dto.Empresa;
 import br.com.syshealth.commons.dto.Plano;
 import br.com.syshealth.commons.dto.Prestador;
 import br.com.syshealth.commons.dto.Procedimento;
-import br.com.syshealth.commons.dto.SeguradoSinistro;
+import br.com.syshealth.commons.dto.Segurado;
 import br.com.syshealth.commons.dto.Sinistro;
-import br.com.syshealth.commons.dto.SubEmpresaSinistro;
+import br.com.syshealth.commons.dto.SubEmpresa;
 import br.com.syshealth.commons.enums.EstadoCivilEnum;
 import br.com.syshealth.commons.enums.GrauParentescoEnum;
 import br.com.syshealth.commons.enums.OperadoraEnum;
@@ -114,136 +109,98 @@ public class GestaoBradescoSinistroServiceHandler implements GestaoBradescoListe
     private void enviarSysHealth(SinistroDto sinistro) {
         log.info("enviarSysHealth: {}", sinistro);
         try {
-            syshealth.sendSinistro(montarSysHealth(sinistro));
+            montarSysHealth(sinistro);
         } catch (CoreValidationException e) {
             log.error("montarSysHealth {}", e);
         }
         log.info("montarSysHealth finalizado!");
     }
 
-    private Sinistro montarSysHealth(SinistroDto sinistro) {
+    private void montarSysHealth(SinistroDto sinistro) throws CoreValidationException {
         log.info("montarSysHealth: {}", sinistro);
 
-        Map<Integer, List<MovimentoDto>> filtroSubEmpresas = sinistro.getMovimento().stream()
-                .collect(Collectors.groupingBy(MovimentoDto::getNumeroDaSubfatura));
+        Empresa empresa = new Empresa(sinistro.getNumeroDaApolice(),
+                null,
+                null,
+                OperadoraEnum.BRADESCO);
 
-        Set<SubEmpresaSinistro> subEmpresas = new HashSet<>();
-        for (Integer subFaturaMovimento : filtroSubEmpresas.keySet()) {
-            Set<SeguradoSinistro> segurados = new HashSet<>();
-            for (MovimentoDto movimento : filtroSubEmpresas.get(subFaturaMovimento)) {
+        for (MovimentoDto movimento : sinistro.getMovimento()) {
 
-                TipoBeneficiarioEnum tipoBeneficiario = null;
-                SexoEnum sexo = null;
-                GrauParentescoEnum parentesco = null;
-                EstadoCivilEnum estadoCivil = null;
-                SeguradoSinistro segurado = null;
-                Integer idade = null;
-                Plano plano = null;
-                RedeReembolsoEnum redeReembolso = null;
-                SimNaoEnum internado = null;
-                Procedimento procedimento = null;
-                Prestador prestador = null;
+            SubEmpresa subEmpresa = new SubEmpresa(movimento.getNumeroDaSubfatura(), movimento.getNomeDaSubfatura(), null, null);
 
-                Long codigoSegurado = new Long(movimento.getNumeroDoCertificado().toString()
-                        + StringUtils.lpad(movimento.getCodigoDoPaciente().toString(), "0", 2));
+            TipoBeneficiarioEnum tipoBeneficiario = null;
+            SexoEnum sexo = null;
+            GrauParentescoEnum parentesco = null;
+            EstadoCivilEnum estadoCivil = null;
+            Segurado segurado = null;
+            Integer idade = null;
+            Plano plano = null;
+            RedeReembolsoEnum redeReembolso = null;
+            SimNaoEnum internado = null;
+            Procedimento procedimento = null;
+            Prestador prestador = null;
 
-                /** Igual a Segurado **/
-                if (codigoSegurado != 0) {
-                    tipoBeneficiario = GestaoBradescoDePara
-                            .retornaTipoBeneficiario(movimento.getCodigoDoPaciente());
+            final Long codigoSegurado = GestaoBradescoDePara.retornaCodigoSegurado(movimento.getNumeroDoCertificado(),
+                    movimento.getCodigoDoPaciente());
 
-                    sexo = GestaoBradescoDePara.retornaSexo(movimento.getSexo());
+            /** Igual a Segurado **/
+            if (codigoSegurado != 0) {
+                tipoBeneficiario = GestaoBradescoDePara
+                        .retornaTipoBeneficiario(movimento.getCodigoDoPaciente());
 
-                    /** Diferente de titular **/
-                    if (movimento.getGrauDeParentesco() != 0)
-                        parentesco = GestaoBradescoDePara
-                                .retornaParentesco(movimento.getGrauDeParentesco());
+                sexo = GestaoBradescoDePara.retornaSexo(movimento.getSexo());
 
-                    // estadoCivil = GestaoBradescoDePara
-                    // .retonaEstadoCivil(movimento.getCodigoEstCivil());
+                /** Diferente de titular **/
+                if (movimento.getGrauDeParentesco() != 0)
+                    parentesco = GestaoBradescoDePara
+                            .retornaParentesco(movimento.getGrauDeParentesco());
 
-                    plano = new Plano(movimento.getPlanoDoSegurado(),
-                            movimento.getPlanoDoSegurado());
+                // estadoCivil = GestaoBradescoDePara
+                // .retonaEstadoCivil(movimento.getCodigoEstCivil());
 
-                    idade = StringUtils.calculaIdade(movimento.getDataDeNascimento());
+                plano = new Plano(movimento.getPlanoDoSegurado(),
+                        movimento.getPlanoDoSegurado());
 
-                    redeReembolso = GestaoBradescoDePara
-                            .retornaRedeReembolso(movimento.getCpfCgcDoReferenciado());
+                idade = StringUtils.calculaIdade(movimento.getDataDeNascimento());
 
-                    internado = GestaoBradescoDePara
-                            .retornaInternado(movimento.getNumeroDoDocumento());
+                redeReembolso = GestaoBradescoDePara
+                        .retornaRedeReembolso(movimento.getCpfCgcDoReferenciado());
 
-                    procedimento = new Procedimento(movimento.getCodigoDoProcedimento(), null);
+                internado = GestaoBradescoDePara
+                        .retornaInternado(movimento.getNumeroDoDocumento());
 
-                    prestador = new Prestador(movimento.getCodigoDoReferenciado(), movimento.getNomeDoBeneficiario(),
-                            movimento.getCpfCgcDoReferenciado(), movimento.getTipoDoReferenciado());
+                procedimento = new Procedimento(movimento.getCodigoDoProcedimento(), null);
 
-                    segurado = criaSegurado(movimento,
-                            tipoBeneficiario,
-                            sexo,
-                            parentesco,
-                            estadoCivil,
-                            idade,
-                            plano,
-                            codigoSegurado,
-                            redeReembolso,
-                            internado,
-                            procedimento,
-                            prestador);
+                prestador = new Prestador(movimento.getCodigoDoReferenciado(), movimento.getNomeDoBeneficiario(),
+                        movimento.getCpfCgcDoReferenciado(), movimento.getTipoDoReferenciado());
 
-                } else // Cobrança Diferenciada
-                    segurado = criaSegurado(movimento,
-                            tipoBeneficiario,
-                            sexo,
-                            parentesco,
-                            estadoCivil,
-                            idade,
-                            plano,
-                            codigoSegurado,
-                            redeReembolso,
-                            internado,
-                            procedimento,
-                            prestador);
+                segurado = new Segurado(codigoSegurado,
+                        null,
+                        movimento.getNomeDoPaciente(), null,
+                        movimento.getDataDeNascimento(),
+                        movimento.getDataDeAdmissao(), null,
+                        tipoBeneficiario, sexo, parentesco, estadoCivil, idade, plano);
 
-                segurados.add(segurado);
+            } else // Cobrança Diferenciada
+                segurado = new Segurado(codigoSegurado,
+                        null,
+                        movimento.getNomeDoPaciente(), null,
+                        movimento.getDataDeNascimento(),
+                        movimento.getDataDeAdmissao(), null,
+                        tipoBeneficiario, sexo, parentesco, estadoCivil, idade, plano);
 
-                subEmpresas.add(new SubEmpresaSinistro(movimento.getNumeroDaSubfatura(),
-                        movimento.getNomeDaSubfatura(),
-                        segurados));
-            }
+            syshealth.sendSinistro(
+                    new Sinistro(sinistro.getDataDeCompetencia(), empresa, subEmpresa, segurado, null, movimento.getDataDoEvento(),
+                            movimento.getDataDoPagamento(), null, procedimento, movimento.getQuantidadeProcedimentos(), prestador,
+                            BigDecimal.valueOf(movimento.getValorDoSinistro()),
+                            BigDecimal.valueOf(movimento.getValorDoRecibo()),
+                            BigDecimal.valueOf(movimento.getValorPago()),
+                            BigDecimal.valueOf(movimento.getValorDeInssOuIssFAJTR()),
+                            BigDecimal.valueOf(movimento.getValorDeInssOuIss()), movimento.getNumeroDoDocumento(), redeReembolso, internado,
+                            null,
+                            null));
+
         }
-
-        EmpresaSinistro empresa = new EmpresaSinistro(sinistro.getNumeroDaApolice(),
-                null,
-                null,
-                OperadoraEnum.BRADESCO,
-                subEmpresas);
-
-        return new Sinistro(sinistro.getDataDeCompetencia(), empresa);
-    }
-
-    private SeguradoSinistro criaSegurado(MovimentoDto movimento, TipoBeneficiarioEnum tipoBeneficiario, SexoEnum sexo,
-            GrauParentescoEnum parentesco, EstadoCivilEnum estadoCivil, Integer idade, Plano plano, Long codigoSegurado,
-            RedeReembolsoEnum redeReembolso, SimNaoEnum internado, Procedimento procedimento, Prestador prestador) {
-
-        return new SeguradoSinistro(codigoSegurado,
-                null,
-                movimento.getNomeDoPaciente(), null,
-                movimento.getDataDeNascimento(),
-                movimento.getDataDeAdmissao(), null,
-                tipoBeneficiario, sexo, parentesco, estadoCivil, idade, plano,
-                null,
-                movimento.getDataDoEvento(),
-                movimento.getDataDoPagamento(), null,
-                procedimento,
-                movimento.getQuantidadeProcedimentos(),
-                prestador,
-                BigDecimal.valueOf(movimento.getValorDoSinistro()),
-                BigDecimal.valueOf(movimento.getValorDoRecibo()),
-                BigDecimal.valueOf(movimento.getValorPago()),
-                BigDecimal.valueOf(movimento.getValorDeInssOuIssFAJTR()),
-                BigDecimal.valueOf(movimento.getValorDeInssOuIss()),
-                movimento.getNumeroDoDocumento(), redeReembolso, internado, null, null);
 
     }
 }
