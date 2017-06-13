@@ -45,9 +45,7 @@ public class GestaoBradescoCadastroServiceHandler implements GestaoBradescoListe
 
     /** The validador. */
     @Autowired
-    GestaoBradescoCadastroValidator gestaoBradescoValidator;
-
-    private Scanner entrada;
+    private GestaoBradescoCadastroValidator gestaoBradescoValidator;
 
     @Override
     public void processaMensagem(String msg) throws CoreValidationException {
@@ -63,7 +61,9 @@ public class GestaoBradescoCadastroServiceHandler implements GestaoBradescoListe
 
         CadastroDto cadastro = null;
         TitularDto titular = null;
-        entrada = new Scanner(msg);
+
+        @SuppressWarnings("resource")
+        Scanner entrada = new Scanner(msg);
 
         Integer totalTitulares = 0;
         Integer totalDependentes = 0;
