@@ -117,6 +117,7 @@ public class GestaoBradescoCadastroServiceHandler implements GestaoBradescoListe
                 if (cadastro != null) {
                     cadastro.setTrailler(ff.readLines(linha, TraillerDto.class));
                 } else {
+                	log.info(linha);
                     throw new IllegalArgumentException("Não existe cadastro!");
                 }
                 break;
